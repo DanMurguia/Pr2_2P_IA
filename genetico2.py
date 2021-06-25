@@ -4,8 +4,8 @@ import operator
 
 Articulos={}
 lista_cajas = []
-n_soluciones=8
-n_articulos = 6
+n_soluciones=24
+n_articulos = 10
 n_cogelones=n_articulos/2
 stop=3
 evaluacion_ordenada = []
@@ -41,15 +41,82 @@ def crear_cromosomas(n_articulos):
 			else:
 				n = random.randint(0,1)
 			nuevo_cromosoma.append(n)
+		print(nuevo_cromosoma)
 		for i in range(0,n_articulos):
 			peso=peso+(nuevo_cromosoma[i]*Articulos[i+1]['Peso'])
+		print(peso)
+
 		if peso <= pesoMax:
 				lista_cajas.append(nuevo_cromosoma)
 				pos+=1
 		peso=0
 	return lista_cajas
 
-def evaluacion(funcion, evaluacion_ordenada, lista_cajas):
+def restriccion(nuevo_cromosoma):
+    raza=razear(nuevo_cromosoma)
+    print(raza)
+    if raza=="L" or raza=="LC" or raza=="C" or raza=="E" or raza=="D" or raza=="CE" or raza=="ED":
+        res=True
+    else:
+        rest=False
+    return rest
+
+def razear(nuevo_cromosoma):
+	L=0
+	C=0
+	E=0
+	D=0
+	raza=""
+	for i in range(0,n_articulos):
+		if (nuevo_cromosoma[i]>1):
+			print(Articulos[i+1]['Tipo'])
+			if (Articulos[i+1]['Tipo']=='Liquid'):
+				L+=1
+			if (Articulos[i+1]['Tipo']=='Food'):
+				C+=1
+			if (Articulos[i+1]['Tipo']=='Document'):
+				D+=1
+			if (Articulos[i+1]['Tipo']=='Electronic'):
+				E+=1
+	if L>=1:
+		raza="L"
+		if C>=1:
+			raza="LC"
+			if E>=1:
+				raza="LCE"
+				if D>=1:
+					raza="LCED"
+			else:
+				if D>=1:
+					raza="LCD"
+		else:
+			if E>=1:
+				raza="LE"
+				if D>=1:
+					raza="LED"
+			else:
+				if D>=1:
+					raza="LD"
+	if C>=1:
+		raza="C"
+		if E>=1:
+			raza="CE"
+			if D>=1:
+				raza="CED"
+		else:
+			if D>=1:
+				raza="CD"
+	if E>=1:
+		raza="E"
+		if D>=1:
+			raza="ED"
+	if D>=1:
+		raza="D"
+
+	return raza
+
+
+def evaluacion(evaluacion_ordenada, lista_cajas):
     print("######Evaluando individuos######")
     if len(evaluacion_ordenada) > 0:
         evaluacion_ordenada.clear()
@@ -149,6 +216,41 @@ def mutacion_simple(cromosoma):
         cromosoma[pos] = 0
     return cromosoma
 
+def resultado(lista_cajas,evaluacion_ordenada):
+    print("#######RESULTADO#######")
+    evaluacion_ordenada=evaluacion(evaluacion_ordenada,lista_cajas)
+    print(evaluacion_ordenada)
+    eva=0
+    for lista in evaluacion_ordenada:
+        eva=0
+        print("Cromosoma:"+str(lista_cajas[lista[0]]))
+        peso=0
+        importancia=0
+        for i in range(0,n_articulos):
+        	peso=peso+(lista_cajas[lista[0]][i]*Articulos[i+1]['Peso'])
+        for i in range(0,n_articulos):
+        	importancia=importancia+(lista_cajas[lista[0]][i]*Articulos[i+1]['Importancia'])
+        print("Peso:"+str(peso))
+        print("Importancia:"+str(importancia))
+        eva=peso/importancia
+        print("Evaluacion:"+str(eva))
+        print("Evaluacion:"+str(lista[1]))
+        print("\n")
+    print("#######Mejor resultado#######")
+    print("Cromosoma:"+str(lista_cajas[evaluacion_ordenada[0][0]]))
+    peso=0
+    importancia=0
+    for i in range(0,n_articulos):
+    	peso=peso+(lista_cajas[evaluacion_ordenada[0][0]][i]*Articulos[i+1]['Peso'])
+    for i in range(0,n_articulos):
+    	importancia=importancia+(lista_cajas[evaluacion_ordenada[0][0]][i]*Articulos[i+1]['Importancia'])
+    print("Peso:"+str(peso))
+    print("Importancia:"+str(importancia))
+    eva=peso/importancia
+    print("Evaluacion:"+str(eva))
+    print("Evaluacion:"+str(evaluacion_ordenada[0][1]))
+    
+
 def mutacion_chida(cromosoma):
     pos = random.randint(0,n_articulos-1)
     nueva_cantidad = random.randint(0,Articulos[pos+1]['Existencia'])
@@ -174,16 +276,17 @@ def mutacion_chida(cromosoma):
 def random_personalizado(exclusiones,rango):
     randInt = random.randint(0,rango)
     return random_personalizado(exclusiones,rango) if randInt in exclusiones else randInt    
-
+ 
 if __name__ == '__main__':
 
     crear_articulos()
     lista_cajas=crear_cromosomas(n_articulos)
     print(lista_cajas)
-    evaluacion_ordenada=evaluacion(0, evaluacion_ordenada,lista_cajas)
+    evaluacion_ordenada=evaluacion(evaluacion_ordenada,lista_cajas)
     print(evaluacion_ordenada)
     lista_cajas=seleccionar(evaluacion_ordenada,lista_cajas,maxOmin)
     cruzamiento(lista_cajas,intervalo,n_articulos,0,len(lista_cajas))
+    resultado(lista_cajas,evaluacion_ordenada)
     '''for i in range(0,n_gen):
         
         
