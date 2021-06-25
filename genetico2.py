@@ -24,7 +24,8 @@ def crear_articulos():
 	cont=1
 	while linea!='':
 		x=linea.split(",")
-		Articulos[cont]={'Peso':int(x[0]),'Importancia':int(x[1]),'Existencia':int(x[2]),'Tipo':x[3][:-1]}
+		Articulos[cont]={'Peso':int(x[0]),'Importancia':int(x[1]),
+                   'Existencia':int(x[2]),'Tipo':x[3][:-1]}
 		linea=fichero.readline()
 		cont+=1
 	print(Articulos)
@@ -42,83 +43,11 @@ def crear_cromosomas(n_articulos):
 			nuevo_cromosoma.append(n)
 		for i in range(0,n_articulos):
 			peso=peso+(nuevo_cromosoma[i]*Articulos[i+1]['Peso'])
-		print(nuevo_cromosoma)
-		print(peso)
 		if peso <= pesoMax:
-			if tipos:
-				res=restriccion(nuevo_cromosoma)
-				if res:
-					lista_cajas.append(nuevo_cromosoma)
-					pos+=1
-			else:
 				lista_cajas.append(nuevo_cromosoma)
 				pos+=1
 		peso=0
 	return lista_cajas
-
-def restriccion(nuevo_cromosoma):
-    raza=razear(nuevo_cromosoma)
-    print(raza)
-    if raza=="L" or raza=="LC" or raza=="C" or raza=="E" or raza=="D" or raza=="CE" or raza=="ED":
-        res=True
-    else:
-        rest=False
-    return rest
-
-def razear(nuevo_cromosoma):
-	L=0
-	C=0
-	E=0
-	D=0
-	raza=""
-	for i in range(0,n_articulos):
-		if (nuevo_cromosoma[i]>1):
-			print(Articulos[i+1]['Tipo'])
-			if (Articulos[i+1]['Tipo']=='Liquid'):
-				L+=1
-			if (Articulos[i+1]['Tipo']=='Food'):
-				C+=1
-			if (Articulos[i+1]['Tipo']=='Document'):
-				D+=1
-			if (Articulos[i+1]['Tipo']=='Electronic'):
-				E+=1
-	if L>=1:
-		raza="L"
-		if C>=1:
-			raza="LC"
-			if E>=1:
-				raza="LCE"
-				if D>=1:
-					raza="LCED"
-			else:
-				if D>=1:
-					raza="LCD"
-		else:
-			if E>=1:
-				raza="LE"
-				if D>=1:
-					raza="LED"
-			else:
-				if D>=1:
-					raza="LD"
-	if C>=1:
-		raza="C"
-		if E>=1:
-			raza="CE"
-			if D>=1:
-				raza="CED"
-		else:
-			if D>=1:
-				raza="CD"
-	if E>=1:
-		raza="E"
-		if D>=1:
-			raza="ED"
-	if D>=1:
-		raza="D"
-
-	return raza
-
 
 def evaluacion(funcion, evaluacion_ordenada, lista_cajas):
     print("######Evaluando individuos######")
@@ -130,10 +59,13 @@ def evaluacion(funcion, evaluacion_ordenada, lista_cajas):
         peso=0
         importancia=0
         for i in range(0,n_articulos):
-        	peso=peso+(lista[i]*Articulos[i+1]['Peso'])
+            	peso=peso+(lista[i]*Articulos[i+1]['Peso'])
         for i in range(0,n_articulos):
-        	importancia=importancia+(lista[i]*Articulos[i+1]['Importancia'])
-        evaluacion = peso/importancia
+            	importancia=importancia+(lista[i]*Articulos[i+1]['Importancia'])
+        if importancia == 0:
+            evaluacion = 10000
+        else:
+            evaluacion = peso/importancia
         cromosomas_evaluados[pos] = evaluacion
         pos += 1
     evaluacion_ordenada = sorted(
@@ -200,18 +132,48 @@ def cruzamiento(lista_cajas, intervalo, n_articulos, cont, largo):
             nuevo_cromosoma.append(lista_cajas[cont+1][pos])
             pos += 1
         print(nuevo_cromosoma)
-        #nuevo_cromosoma=mutacion(nuevo_cromosoma)
+        if exis:
+            nuevo_cromosoma=mutacion_chida(nuevo_cromosoma)
+        else:
+            nuevo_cromosoma=mutacion_simple(nuevo_cromosoma)
         lista_cajas.append(nuevo_cromosoma)
         print(lista_cajas)
         cruzamiento(lista_cajas,intervalo,n_articulos,cont+2,largo)
         
-def mutacion(cromosoma):
-    pos = random.randint(0,7)
+def mutacion_simple(cromosoma):
+    print("######Una mutación salvaje ha aparecido######")
+    pos = random.randint(0,n_articulos-1)
     if cromosoma[pos] == 0:
         cromosoma[pos] = 1
     elif cromosoma[pos] == 1:
         cromosoma[pos] = 0
     return cromosoma
+
+def mutacion_chida(cromosoma):
+    pos = random.randint(0,n_articulos-1)
+    nueva_cantidad = random.randint(0,Articulos[pos+1]['Existencia'])
+    cantidad_original = cromosoma[pos]
+    no_disponibles = True
+    if nueva_cantidad > cantidad_original:
+        print("######Una mutación salvaje ha aparecido######")
+        pos2 = random_personalizado([pos],n_articulos-1)
+        cromosoma[pos] = nueva_cantidad
+        cromosoma[pos2] = random.randint(0,cromosoma[pos2])
+        return cromosoma
+    elif nueva_cantidad < cantidad_original:
+        print("######Una mutación salvaje ha aparecido######")
+        pos2 = random_personalizado([pos],n_articulos-1)
+        cromosoma[pos] = nueva_cantidad
+        cromosoma[pos2]= random.randint(cromosoma[pos2],Articulos[pos2+1]['Existencia'])
+        return cromosoma
+    else:
+        return cromosoma
+        
+        
+        
+def random_personalizado(exclusiones,rango):
+    randInt = random.randint(0,rango)
+    return random_personalizado(exclusiones,rango) if randInt in exclusiones else randInt    
 
 if __name__ == '__main__':
 
