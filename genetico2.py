@@ -2,26 +2,12 @@ import random
 import math
 import operator
 
-Articulos={}
-lista_cajas = []
-n_soluciones=28
-n_articulos = 10
-n_cogelones=n_articulos/2
-stop=3
-evaluacion_ordenada = []
-maxOmin = 2
-intervalo = 4
-intervalo2 = 4
-n_gen = 5
-pesoMax=25
-exis=True
-tipos=False
 razas = {0:[1,0,0,0,0,0,0,0,1,1,"liquido"],1:[0,1,0,1,0,0,1,0,0,0,"comida"],
          2:[0,0,1,0,1,0,0,0,0,0,"documento"],3:[0,0,0,0,0,1,0,1,0,0,"electronico"],
          4:[1,1,0,1,0,0,1,0,1,1,"licomida"],5:[0,0,1,0,1,1,0,1,0,0,"electromento"],
          6:[0,1,0,1,0,1,1,1,0,0,"elecomida"]}
 
-def crear_articulos():
+def crear_articulos(Articulos):
 	fichero=open('Articulos.txt','r')
 	linea=fichero.readline()
 	cont=1
@@ -33,7 +19,7 @@ def crear_articulos():
 		cont+=1
 	print(Articulos)
     
-def creacion_razizta(n_articulos,razas,n_soluciones):
+def creacion_razizta(n_articulos,razas,n_soluciones,Articulos,pesoMax,lista_cajas):
     pos=0
     peso=0
     individuos_raza= n_soluciones/7
@@ -57,16 +43,13 @@ def creacion_razizta(n_articulos,razas,n_soluciones):
         peso = 0
     return lista_cajas
         
-
-
-
-def crear_cromosomas(n_articulos):
+def crear_cromosomas(n_articulos,n_soluciones,Articulos,pesoMax,lista_cajas,modo):
 	pos=0
 	peso=0
 	while pos < n_soluciones:
 		nuevo_cromosoma = []
 		for i in range(0, n_articulos):
-			if exis:
+			if modo==1:
 				n = random.randint(0,Articulos[i+1]['Existencia'])
 			else:
 				n = random.randint(0,1)
@@ -82,8 +65,8 @@ def crear_cromosomas(n_articulos):
 		peso=0
 	return lista_cajas
 
-def evaluacion_razizta(evaluacion_ordenada,lista_cajas,razas):
-    print("######Evaluando individuos######")
+def evaluacion_razizta(evaluacion_ordenada,lista_cajas,razas,n_articulos,Articulos):
+    print("\n####################\n######Evaluando individuos######\n####################\n")
     if len(evaluacion_ordenada) > 0:
         evaluacion_ordenada.clear()
     pos = 0
@@ -106,8 +89,7 @@ def evaluacion_razizta(evaluacion_ordenada,lista_cajas,razas):
         cromosomas_evaluados.items(), key=operator.itemgetter(1))
     return evaluacion_ordenada
 
-
-def evaluacion(evaluacion_ordenada, lista_cajas):
+def evaluacion(evaluacion_ordenada, lista_cajas,n_articulos,Articulos):
     print("######Evaluando individuos######")
     if len(evaluacion_ordenada) > 0:
         evaluacion_ordenada.clear()
@@ -131,8 +113,7 @@ def evaluacion(evaluacion_ordenada, lista_cajas):
     
     return evaluacion_ordenada
 
-
-def seleccion_razizta(evaluacion_ordenada,liata_cajas):
+def seleccion_razizta(evaluacion_ordenada,lista_cajas):
     print("######Seleccionando individuos######")
     tamaño = len(lista_cajas)
     pes = 0
@@ -216,25 +197,21 @@ def seleccion_razizta(evaluacion_ordenada,liata_cajas):
 
     return lista_cajas
 
-
 def seleccionar(evaluacion_ordenada, lista_cajas):
-    print("######Seleccionando individuos######")
+    print("\n####################\n######Seleccionando individuos######\n####################\n")
     tamaño = len(lista_cajas)
     pos = 0
     while pos < tamaño / 2:
-        print(evaluacion_ordenada[-1][0])
         if evaluacion_ordenada[-1][0] > (len(lista_cajas) - 1):
             lista_cajas.pop(evaluacion_ordenada[-1][0] - pos)
         else:
             lista_cajas.pop(evaluacion_ordenada[-1][0])
         evaluacion_ordenada.pop(-1)
         pos += 1
-        print(lista_cajas)
-        print(evaluacion_ordenada)
     return lista_cajas
 
-
-def cruzamiento(lista_cajas, intervalo, n_articulos, cont, largo,intervalo2):
+def cruzamiento(lista_cajas, intervalo, n_articulos, cont, largo,intervalo2,
+                modo,Articulos):
     print("#######CRUZAMIENTO#######")
     if (cont+1)<largo:
         nuevo_cromosoma=[]
@@ -263,18 +240,33 @@ def cruzamiento(lista_cajas, intervalo, n_articulos, cont, largo,intervalo2):
             nuevo_cromosoma.append(lista_cajas[cont+1][pos])
             pos += 1
         print(nuevo_cromosoma)
-        if exis:
-            nuevo_cromosoma=mutacion_chida(nuevo_cromosoma)
+        if modo == 1:
+            nuevo_cromosoma=mutacion_chida(nuevo_cromosoma,[],n_articulos,Articulos)
         else:
             nuevo_cromosoma=mutacion_simple(nuevo_cromosoma)
         lista_cajas.append(nuevo_cromosoma)
         print(lista_cajas)
-        cruzamiento(lista_cajas,intervalo,n_articulos,cont+2,largo, intervalo2)
+        cruzamiento(lista_cajas,intervalo,n_articulos,cont+2,largo, intervalo2,
+                    modo,Articulos)
 
 def deli_razizta(lista_cajas, intervalo, n_articulos, cont, largo,intervalo2):
-    print("#######CRUZAMIENTO#######")
+    print("\n####################\n#######CRUZAMIENTO#######\n####################\n")
     if (cont+1)<largo:
         if lista_cajas[cont][n_articulos] == lista_cajas[cont+1][n_articulos]: 
+            if lista_cajas[cont][n_articulos] == "liquido":    
+                exclusiones = [1,2,3,4,5,6,7]
+            elif lista_cajas[cont][n_articulos] == "comida":    
+               exclusiones = [0,2,4,5,7,8,9]
+            elif lista_cajas[cont][n_articulos] == "electronico":    
+                exclusiones = [0,1,2,3,4,6,8,9]
+            elif lista_cajas[cont][n_articulos] == 'documento':    
+               exclusiones = [0,1,3,5,6,7,8,9]
+            elif lista_cajas[cont][n_articulos] == "elecomida" :    
+                exclusiones = [0,2,4,8,9]
+            elif  lista_cajas[cont][n_articulos] == "electromento":    
+                exclusiones = [0,1,3,6,8,9]
+            elif lista_cajas[cont][n_articulos] == "licomida":  
+                exclusiones = [2,4,5,7]
             print(lista_cajas[cont][n_articulos])
             print(lista_cajas[cont+1][n_articulos])
             nuevo_cromosoma=[]
@@ -303,12 +295,12 @@ def deli_razizta(lista_cajas, intervalo, n_articulos, cont, largo,intervalo2):
                 nuevo_cromosoma2.append(lista_cajas[cont+1][pos])
                 pos += 1
             print(nuevo_cromosoma)
-            nuevo_cromosoma=mutacion_chida(nuevo_cromosoma)
+            nuevo_cromosoma=mutacion_chida(nuevo_cromosoma,exclusiones)
             lista_cajas.append(nuevo_cromosoma2)
             print(lista_cajas)
-            deli_razizta(lista_cajas,intervalo,n_articulos,cont+2,largo,intervalo2)
+        deli_razizta(lista_cajas,intervalo,n_articulos,cont+1,largo,intervalo2)
         
-def mutacion_simple(cromosoma):
+def mutacion_simple(cromosoma,n_articulos):
     print("######Una mutación salvaje ha aparecido######")
     pos = random.randint(0,n_articulos-1)
     if cromosoma[pos] == 0:
@@ -317,20 +309,21 @@ def mutacion_simple(cromosoma):
         cromosoma[pos] = 0
     return cromosoma
     
-def mutacion_chida(cromosoma):
+def mutacion_chida(cromosoma,exclusiones,n_articulos,Articulos):
     pos = random.randint(0,n_articulos-1)
+    exclusiones.append(pos)
     nueva_cantidad = random.randint(0,Articulos[pos+1]['Existencia'])
     cantidad_original = cromosoma[pos]
     no_disponibles = True
     if nueva_cantidad > cantidad_original:
         print("######Una mutación salvaje ha aparecido######")
-        pos2 = random_personalizado([pos],n_articulos-1)
+        pos2 = random_personalizado(exclusiones,n_articulos-1)
         cromosoma[pos] = nueva_cantidad
         cromosoma[pos2] = random.randint(0,cromosoma[pos2])
         return cromosoma
     elif nueva_cantidad < cantidad_original:
         print("######Una mutación salvaje ha aparecido######")
-        pos2 = random_personalizado([pos],n_articulos-1)
+        pos2 = random_personalizado(exclusiones,n_articulos-1)
         cromosoma[pos] = nueva_cantidad
         cromosoma[pos2]= random.randint(cromosoma[pos2],Articulos[pos2+1]['Existencia'])
         return cromosoma
@@ -341,10 +334,9 @@ def random_personalizado(exclusiones,rango):
     randInt = random.randint(0,rango)
     return random_personalizado(exclusiones,rango) if randInt in exclusiones else randInt    
  
-def resultado(lista_cajas,evaluacion_ordenada):
+def resultado(lista_cajas,evaluacion_ordenada,n_articulos,Articulos):
     print("#######RESULTADO#######")
-    evaluacion_ordenada=evaluacion(evaluacion_ordenada,lista_cajas)
-    print(evaluacion_ordenada)
+    evaluacion_ordenada=evaluacion(evaluacion_ordenada,lista_cajas,n_articulos,Articulos)
     for lista in evaluacion_ordenada:
         print("Cromosoma:"+str(lista_cajas[lista[0]]))
         peso=0
@@ -369,19 +361,51 @@ def resultado(lista_cajas,evaluacion_ordenada):
     print("Importancia:"+str(importancia))
     print("Evaluacion:"+str(evaluacion_ordenada[0][1]))
 
-
-if __name__ == '__main__':
-
-    for i in range(0,n_gen):
-        crear_articulos()
-        lista_cajas=creacion_razizta(n_articulos,razas,n_soluciones)
-        print(lista_cajas)
-        evaluacion_ordenada=evaluacion_razizta(evaluacion_ordenada,lista_cajas,razas)
-        print(evaluacion_ordenada)
-        lista_cajas=seleccionar(evaluacion_ordenada,lista_cajas)
-        print(lista_cajas)
-        print(evaluacion_ordenada)
-        deli_razizta(lista_cajas,intervalo,n_articulos,0,len(lista_cajas),intervalo2)
-    resultado(lista_cajas,evaluacion_ordenada)
+def init():
+    Articulos={}
+    lista_cajas = []
+    n_soluciones=28
+    n_articulos = 10
+    n_cogelones=n_articulos/2
+    stop=3
+    evaluacion_ordenada = []
+    maxOmin = 2
+    intervalo = 4
+    intervalo2 = 4
+    n_gen = 10
+    pesoMax=25
+    modo=1
+    
+    if modo == 0 or modo == 1:
+        crear_articulos(Articulos)
+        lista_cajas=crear_cromosomas(n_articulos,n_soluciones,Articulos,pesoMax,
+                                     lista_cajas,modo)
+        for i in range(0,n_gen):
+            print(lista_cajas)
+            evaluacion_ordenada=evaluacion(evaluacion_ordenada,lista_cajas,n_articulos,
+                                           Articulos)
+            print(evaluacion_ordenada)
+            lista_cajas=seleccionar(evaluacion_ordenada,lista_cajas)
+            cruzamiento(lista_cajas,intervalo,n_articulos,0,len(lista_cajas),
+                        intervalo2,modo,Articulos)
+        resultado(lista_cajas,evaluacion_ordenada,n_articulos,Articulos)
         
+        
+    elif modo == 2:
+        crear_articulos(Articulos)
+        lista_cajas=creacion_razizta(n_articulos,razas,n_soluciones,Articulos,pesoMax,lista_cajas)
+    
+        for i in range(0,n_gen):
+            print(lista_cajas)
+            evaluacion_ordenada=evaluacion_razizta(evaluacion_ordenada,lista_cajas,razas,n_articulos,Articulos)
+            print(evaluacion_ordenada)
+            lista_cajas=seleccionar(evaluacion_ordenada,lista_cajas)
+            print(lista_cajas)
+            print(evaluacion_ordenada)
+            deli_razizta(lista_cajas,intervalo,n_articulos,0,len(lista_cajas),intervalo2)
+        resultado(lista_cajas,evaluacion_ordenada)
+    
+    
+if __name__ == '__main__':
+        init()
         
